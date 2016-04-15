@@ -382,8 +382,12 @@ class Simple_FB_Instant_Articles {
 			return '';
 		}
 
-		$template = trailingslashit( $this->template_path ) . 'image.php';
-		require( $template );
+		echo $this->render_template('image', array(
+			'image_id'	=> $fb_instant_image_id,
+			'image_caption'	=> $fb_instant_caption,
+			'src'	=>	$fb_instant_src
+		));
+		return '';
 	}
 
 	/**
@@ -946,7 +950,9 @@ class Simple_FB_Instant_Articles {
 		} else {
 			$template_path = trailingslashit( $this->template_path ) . $template_name . '.php';
 		}
-
+		if ( !empty( $data ) ){
+			extract( $data, EXTR_SKIP );
+		}
 		if ( 0 === validate_file( $template_path ) ) {
 			ob_start();
 			require( $template_path );
