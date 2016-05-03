@@ -449,7 +449,9 @@ class Simple_FB_Instant_Articles {
 			}
 		}
 
-		return sprintf( '<figure class="%s"><iframe>%s</iframe></figure>', $class, $html );
+		$social_embed_frame_class = apply_filters('simple_fb_social_embed_frame_class', 'no-margin');
+
+		return sprintf( '<figure class="%s"><iframe class="%s">%s</iframe></figure>', $class, $social_embed_frame_class, $html );
 	}
 
 	/**
