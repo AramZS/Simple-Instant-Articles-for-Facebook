@@ -3,7 +3,7 @@
 Plugin Name: Simple Facebook Instant Articles
 Version: 0.5.3
 Description: Add support to Facebook Instant Articles
-Author: Jake Spurlock, Human Made Limited
+Author: Jake Spurlock, Human Made Limited, Aram Zucker-Scharff
 Author URI: http://jakespurlock.com
 */
 
@@ -22,7 +22,6 @@ class Simple_FB_Instant_Articles {
 	 * Endpoint query var.
 	 */
 	private $token = 'fb';
-
 
 	/**
 	 * Image Size - 2048x2048 recommended resolution.
@@ -77,7 +76,7 @@ class Simple_FB_Instant_Articles {
 		$this->file          = $file;
 		$this->template_path = trailingslashit( $this->dir ) . 'templates/';
 		$this->home_url      = trailingslashit( home_url() );
-		$this->endpoint      = apply_filters( 'simple_fb_article_endpoint', 'fb-instant' );
+		$this->endpoint      = apply_filters( 'simple_fb_article_endpoint', '' );
 		$this->options       = get_option( 'fb_instant' );
 	}
 
@@ -265,6 +264,9 @@ class Simple_FB_Instant_Articles {
 		// Try and fix misc shortcodes.
 		$this->sandbox_shortcode_output( 'protected-iframe' );
 
+		// Post URL for the feed.
+		add_filter( 'the_permalink_rss', array( $this, 'rss_permalink' ) );
+
 		// Shortcodes - custom galleries.
 		add_shortcode( 'sigallery', array( $this, 'api_galleries_shortcode' ) );
 
@@ -287,6 +289,14 @@ class Simple_FB_Instant_Articles {
 		add_action( 'simple_fb_reformat_post_content', array( $this, 'cleanup_empty_nodes' ), 10, 2 );
 		add_action( 'simple_fb_reformat_post_content', array( $this, 'fix_headings' ), 10, 2 );
 		add_action( 'simple_fb_reformat_post_content', array( $this, 'fix_social_embed' ), 1000, 2 );
+	}
+
+	public function rss_permalink( $link ) {
+		if ( '' !== $this->endpoint ){
+			return trailingslashit( $link ) . $this->endpoint;
+		} else {
+			return $link;
+		}
 	}
 
 	/**
@@ -404,8 +414,12 @@ class Simple_FB_Instant_Articles {
 			return '';
 		}
 
-		$template = trailingslashit( $this->template_path ) . 'image.php';
-		require( $template );
+		echo $this->render_template('image', array(
+			'image_id'	=> $fb_instant_image_id,
+			'image_caption'	=> $fb_instant_caption,
+			'src'	=>	$fb_instant_src
+		));
+		return '';
 	}
 
 	/**
@@ -467,7 +481,9 @@ class Simple_FB_Instant_Articles {
 			}
 		}
 
-		return sprintf( '<figure class="%s"><iframe>%s</iframe></figure>', $class, $html );
+		$social_embed_frame_class = apply_filters('simple_fb_social_embed_frame_class', 'no-margin');
+
+		return sprintf( '<figure class="%s"><iframe class="%s">%s</iframe></figure>', $class, $social_embed_frame_class, $html );
 	}
 
 	/**
@@ -968,7 +984,9 @@ class Simple_FB_Instant_Articles {
 		} else {
 			$template_path = trailingslashit( $this->template_path ) . $template_name . '.php';
 		}
-
+		if ( !empty( $data ) ){
+			extract( $data, EXTR_SKIP );
+		}
 		if ( 0 === validate_file( $template_path ) ) {
 			ob_start();
 			require( $template_path );
@@ -986,7 +1004,6 @@ class Simple_FB_Instant_Articles {
 function simple_fb_instant_articles( $file, $version ) {
 	return Simple_FB_Instant_Articles::instance( $file, $version );
 }
-
 
 /**
  * These functions are included to assure backwards compatability
